@@ -1,0 +1,10 @@
+Additional Instructions to be Implemented for Project:
+1) XOR R[REG], ADDRESS
+2) READ R[REG], ADDRESS
+3) WRITE R[REG], ADDRESS
+4) DEC R[REG], ADDRESS (R[REG] = R[REG] - 1)
+5) NAND R[REG], ADDRESS
+6) NOR R[REG], ADDRESS
+7) SRA R[REG] --> arithmetic shift
+8) SLA R[REG] --> arithmetic shift
+9) 
