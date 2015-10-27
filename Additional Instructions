@@ -7,4 +7,11 @@ Additional Instructions to be Implemented for Project:
 6) NOR R[REG], ADDRESS
 7) SRA R[REG] --> arithmetic shift
 8) SLA R[REG] --> arithmetic shift
-9) 
+9) SW  R[REG], ADDRESS --> store address in register
+10)LW  R[REG], ADDRESS --> load from address to register
+11)SLT R[REG], ADDRESS
+12)ORI R[REG], ADDRESS
+13)ANDI R[REG], ADDRESS
+14)LI R[REG], ADDRESS --Load immediate address
+15)XORI R[REG], ADDRESS
+16)CLZ R[REG], ADDRESS --count leading zeros at address , store result in register
