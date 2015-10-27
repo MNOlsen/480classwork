@@ -1,0 +1,19 @@
+Library ieee;
+include  ieee.std_logic_1164.all
+
+entity DEMicro is 
+	port (opcode : in std_logic_vector(4 downto 0);
+			clock  : in std_logic;
+			clk_pick : in std_logic; 
+			
+			
+architecture behavior of DEMicro is
+signal R0 : unsigned(15 downto 0); 
+signal R1 : unsigned(15 downto 0);
+signal clk_125hz : std_logic;
+
+
+clocks: entity work.clk_div(behavior)
+	port map (clock_50mhz => clock, clock_125hz => clk_125hz);
+
+process(clock, )
