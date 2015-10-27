@@ -2,14 +2,21 @@ Library ieee;
 include  ieee.std_logic_1164.all
 
 entity DEMicro is 
-	port (opcode : in std_logic_vector(4 downto 0);
-			clock  : in std_logic;
-			clk_pick : in std_logic; 
+	port (opcode 			: in std_logic_vector(4 downto 0);
+			clock, reset 	: in std_logic;
+			clk_sel 			: in std_logic;
+			PC_out 			: out std_logic_vector(address_width -1 downto 0);
+			
+			);
+	
+	generic( address_width	: integer := 10;
+				data_width		: integer
+				
 			
 			
 architecture behavior of DEMicro is
-signal R0 : unsigned(15 downto 0); 
-signal R1 : unsigned(15 downto 0);
+signal R0 : std_logic; 
+signal R1 : std_logic;
 signal clk_125hz : std_logic;
 
 
