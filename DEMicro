@@ -2,25 +2,105 @@ Library ieee;
 include  ieee.std_logic_1164.all
 
 entity DEMicro is 
-	port (opcode 			: in std_logic_vector(4 downto 0);
-			clock, reset 	: in std_logic;
-			clk_sel 			: in std_logic;
-			PC_out 			: out std_logic_vector(address_width -1 downto 0);
+	port (opcode 					: in std_logic_vector(4 downto 0);
+			clock, reset, 			: in std_logic;
+			clk_sel,button_clock : in std_logic;
+			reg_sel					: in std_logic;
+			PC_out 					: out std_logic_vector(address_width -1 downto 0);
 			
 			);
 	
 	generic( address_width	: integer := 10;
-				data_width		: integer
+				data_width		: integer := 5);
 				
 			
 			
 architecture behavior of DEMicro is
-signal R0 : std_logic; 
-signal R1 : std_logic;
-signal clk_125hz : std_logic;
+
+	type myFSM is (execue_STR, execute_ADD, execute_AND, execute_IN, execute_INC, execute_JMP, execute_JN,
+						execute_JP, execute_JZ, execute_LDR, execute_NOT, execute_OR, execute_OUT, execute_SHL,
+						execute_SHR, execute_SUB);
+	signal state : myFSM;
+	
+	address_reg : std_logic_vector(address_width -1 downto 0);
+	
+	signal R0 : std_logic_vector(15 downto 0); 
+	signal R1 : std_logic_vector(15 downto 0);
+	signal REG : std_logic_vector(15 downto 0);
+	signal PC : unsigned(data_width -1 downto 0);
+	signal my_clock : std_logic;
+
+	signal clk_125mhz : std_logic;
 
 
-clocks: entity work.clk_div(behavior)
-	port map (clock_50mhz => clock, clock_125hz => clk_125hz);
+	clocks: entity work.clk_div(behavior)
+		port map (clock_50mhz => clock, clock_125hz => clk_125mhz);
 
-process(clock, )
+	process(clock,clk_125mhz )
+		--clock multiplexer
+		if clk_sel= '0' then 
+			my_clock <= clk_125mhz;
+		else
+			my_clock <= button_clock;
+		end if;
+		
+		-- register multiplexer
+		if reg_sel =  '0' then 
+			REG <= R0;
+		else 
+			REG <= R1;
+		end if;
+		
+		--start of code
+		if rising_edge(my_clock) then 
+			case opcode is 
+				when "00000" => state <= execute_ADD;
+				when "00001" => state <= execue_STR;
+				when "00010" => state <= execute_LDR;
+				when "00011" => state <= execute_JMP;
+				when "00100" => state <= execute_JN;
+				when "00101" => state <= execute_SUB;
+				when "00110" => state <= execute_INC;
+				when "00111" => state <= execute_OR;
+				when "01000" => state <= execute_AND;
+				when "01001" => state <= execute_NOT;
+				when "01010" => state <= execute_JP;
+				when "01011" => state <= execute_JZ;
+				when "01100" => state <= execute_SHL;
+				when "01101" => state <= execute_SHR;
+				when "01110" => state <= execute_IN;
+				when "01111" => state <= execute_OUT;
+				--START OF USER DEFINED
+	--			when "10000" => state <= execute_add;
+	--			when "10001" => state <= execue_STR;
+	--			when "10010" => state <= execute_LDR;
+	--			when "10011" => state <= execute_JMP;
+	--			when "10100" => state <= execute_JN;
+	--			when "10101" => state <= execute_SUB;
+	--			when "10110" => state <= execute_INC;
+	--			when "10111" => state <= execute_OR;
+	--			when "11000" => state <= execute_AND;
+	--			when "11001" => state <= execute_NOT;
+	--			when "11010" => state <= execute_JP;
+	--			when "11011" => state <= execute_JZ;
+	--			when "11100" => state <= execute_SHL;
+	--			when "11101" => state <= execute_SHR;
+	--			when "11110" => state <= execute_IN;
+	--			when "11111" => state <= execute_OUT;	
+				
+			end case; 
+			
+			case state is 
+				when execute_ADD =>
+					REG <= REG + signed(address_reg);
+					
+				
+				
+				
+				
+				
+				
+				
+				
+				
+				
