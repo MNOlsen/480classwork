@@ -12,6 +12,6 @@ Additional Instructions to be Implemented for Project:
 11)SLT R[REG], ADDRESS
 12)SB R[REG], ADDRESS
 13)LB R[REG], ADDRESS --> load byte
-14)
-15)
+14)NOP R[REG]
+15)BRK R[REG]
 16)CLZ R[REG], ADDRESS --count leading zeros at address , store result in register
