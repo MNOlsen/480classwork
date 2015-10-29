@@ -7,10 +7,10 @@ Additional Instructions to be Implemented for Project:
 6) NOR R[REG], ADDRESS
 7) SRA R[REG] --> arithmetic shift
 8) SLA R[REG] --> arithmetic shift
-9) SW  R[REG], ADDRESS --> store address in register
-10)LW  R[REG], ADDRESS --> load from address to register
+9) SW  R[REG], ADDRESS --> store 1 word from address
+10)LW  R[REG], ADDRESS --> load 1 word from address
 11)SLT R[REG], ADDRESS
-
+12)SB R[REG], ADDRESS
 13)LB R[REG], ADDRESS --> load byte
 
 
