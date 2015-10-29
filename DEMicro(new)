@@ -1,5 +1,6 @@
 library ieee;
-include ieee.std_logic_1164.all;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all
 
 entity DEMicro is
 	generic (address_width	: integer := 10;
@@ -9,6 +10,8 @@ entity DEMicro is
 			clock, reset				: in std_logic;
 			clk_sel, button_clock	: in std_logic;
 			reg_sel						: in std_logic;
+			switches						: in std_logic_vector(7 downto 0); 
+			LEDS							: out std_logic_vector(7 downto 0);
 			PC_out						: out std_logic_vector(address_width-1 downto 0);
 			reg_ac_out					: out std_logic_vector(data_width-1 downto 0);
 			memory_data_reg_out		: out std_logic_vector(data_width-1 downto 0);
@@ -31,14 +34,14 @@ type FSM is (reset, fetch, decode,
 signal state					: FSM;
 signal instruction_reg		: unsigned(data_width-1 downto 0);
 signal memory_data_reg		: unsigned(data_width-1 downto 0);
-signal reg_ac			: signed(data_width-1 downto 0);
+signal reg_ac					: signed(data_width-1 downto 0);
 signal PC						: unsigned(address_width-1 downto 0);
 signal memory_address_reg	: unsigned(address_width-1 downto 0);
 signal memory_write			: std_logic;
 
 signal R0						: std_logic_vector(15 downto 0);
 signal R1						: std_logic_vector(15 downto 0);
-signal REG						: std_logic_vector(15 downto 0);
+
 
 signal my_clock				: std_logic;
 signal clk_125mhz				: std_logic;
@@ -61,6 +64,22 @@ clocks: entity work.clk_div(behavior)
 		else
 			my_clock <= button_clock;
 		end if;
+		if rising_edge(my_clock) then 
+			if memory_write = '1' then 
+				ram_block(to_integer(memory_address_reg)) <= unsigned(reg_ac);
+			end if;
+			memory_data_reg <= ram_block(to_integer(memory_address_reg));
+		end if;
+	end process; 
+	
+	
+	process(clock,clk_125mhz )
+		--clock multiplexer
+		if clk_sel= '0' then 
+			my_clock <= clk_125mhz;
+		else
+			my_clock <= button_clock;
+		end if;
 		
 		-- register multiplexer
 		if reg_sel =  '0' then 
@@ -71,44 +90,137 @@ clocks: entity work.clk_div(behavior)
 		
 		--start of code
 		if rising_edge(my_clock) then 
-			case opcode is 
-				when "00000" => state <= execute_ADD;
-				when "00001" => state <= execue_STR;
-				when "00010" => state <= execute_LDR;
-				when "00011" => state <= execute_JMP;
-				when "00100" => state <= execute_JN;
-				when "00101" => state <= execute_SUB;
-				when "00110" => state <= execute_INC;
-				when "00111" => state <= execute_OR;
-				when "01000" => state <= execute_AND;
-				when "01001" => state <= execute_NOT;
-				when "01010" => state <= execute_JP;
-				when "01011" => state <= execute_JZ;
-				when "01100" => state <= execute_SHL;
-				when "01101" => state <= execute_SHR;
-				when "01110" => state <= execute_IN;
-				when "01111" => state <= execute_OUT;
-				--START OF USER DEFINED
-	--			when "10000" => state <= execute_add;
-	--			when "10001" => state <= execue_STR;
-	--			when "10010" => state <= execute_LDR;
-	--			when "10011" => state <= execute_JMP;
-	--			when "10100" => state <= execute_JN;
-	--			when "10101" => state <= execute_SUB;
-	--			when "10110" => state <= execute_INC;
-	--			when "10111" => state <= execute_OR;
-	--			when "11000" => state <= execute_AND;
-	--			when "11001" => state <= execute_NOT;
-	--			when "11010" => state <= execute_JP;
-	--			when "11011" => state <= execute_JZ;
-	--			when "11100" => state <= execute_SHL;
-	--			when "11101" => state <= execute_SHR;
-	--			when "11110" => state <= execute_IN;
-	--			when "11111" => state <= execute_OUT;	
+			
+			
 				
 			end case; 
 			
 			case state is 
+				
+				when decode => 
+					case opcode is 
+						when "00000" => state <= execute_ADD;
+						when "00001" => state <= execute_STORE;
+						when "00010" => state <= execute_LDR;
+						when "00011" => state <= execute_JMP;
+						when "00100" => state <= execute_JN;
+						when "00101" => state <= execute_SUB;
+						when "00110" => state <= execute_INC;
+						when "00111" => state <= execute_OR;
+						when "01000" => state <= execute_AND;
+						when "01001" => state <= execute_NOT;
+						when "01010" => state <= execute_JP;
+						when "01011" => state <= execute_JZ;
+						when "01100" => state <= execute_SHL;
+						when "01101" => state <= execute_SHR;
+						when "01110" => state <= execute_IN;
+						when "01111" => state <= execute_OUT;
+						--START OF USER DEFINED
+			--			when "10000" => state <= execute_add;
+			--			when "10001" => state <= execute_STR;
+			--			when "10010" => state <= execute_LDR;
+			--			when "10011" => state <= execute_JMP;
+			--			when "10100" => state <= execute_JN;
+			--			when "10101" => state <= execute_SUB;
+			--			when "10110" => state <= execute_INC;
+			--			when "10111" => state <= execute_OR;
+			--			when "11000" => state <= execute_AND;
+			--			when "11001" => state <= execute_NOT;
+			--			when "11010" => state <= execute_JP;
+			--			when "11011" => state <= execute_JZ;
+			--			when "11100" => state <= execute_SHL;
+			--			when "11101" => state <= execute_SHR;
+			--			when "11110" => state <= execute_IN;
+			--			when "11111" => state <= execute_OUT;	
+				
+						end case; 
+				when reset => 
+					PC <= (others => '0');
+					reg_ac <= (others => '0');
+					state <= fetch;
+				
+				when fetch =>
+					PC <= PC +1;
+					instruction_reg <= memory_data_reg;
+					state <= decode;
+--beginning of executing instructions
+
 				when execute_ADD =>
-					REG <= REG + signed(address_reg);
+					reg_ac <= reg_ac + signed(memory_data_reg);
+					state <= fetch ; -- this should theoretically send it to the next state.
 					
+				when execute_ST0RE	=> 
+					memory_write <= '1';
+					memory_address_reg <= reg_ac; --may need to edit
+					state <= fetch; 
+				
+				when execute_LDR => 
+					reg_ac <= signed(memory_data_reg); 
+					state <= fetch;
+				
+				when execute_JMP => -- does this need 2 clock cycles?
+					PC = instruction_reg(address_width -1 downto 0);
+					state <= fetch;
+				
+				when execute_JN => 
+					if (reg_ac < 0 ) then 
+						PC <= instruction_reg(address_width - 1 downto 0); 
+					end if;
+					state <= fetch; 
+					
+				when execute_SUB =>
+					reg_ac <= reg_ac = signed(memory_data_reg); 
+					state <= fetch;
+				
+				when execute_INC =>
+					reg_ac <= reg_ac + 1;
+					state <= fetch; 
+				
+				when execute_OR => 
+					reg_ac <= reg_ac OR signed(memory_data_reg);
+					state <= fetch;
+				
+				when execute_AND =>
+					reg_ac <= reg_ac AND signed(memory_data_reg);
+					state <= fetch;
+				
+				when execute_NOT => 
+					reg_ac <= NOT reg_ac;
+				
+				when execute_JP =>
+					if (reg_ac > 0 ) then 
+						PC <= instruction_reg(address_width - 1 downto 0); 
+					end if;
+					state <= fetch; 
+				
+				when execute_JZ => 
+					if (reg_ac = 0 ) then 
+						PC <= instruction_reg(address_width - 1 downto 0); 
+					end if;
+					state <= fetch; 
+				
+				when execute_SHL =>
+					reg_ac <= reg_ac sll 1;
+					state <= fetch;
+				
+				when execute_SHR =>
+					reg_ac <= reg_ac srl 1; 
+					state <= fetch; 
+				
+				when execute_IN =>
+					reg_ac(7 downto 0) <= switches(7 downto 0);
+					state <= fetch;
+				
+				when execute_out =>
+					leds(7 downto 0) <= reg_ac(7 downto 0); 
+					state <= fetch; 
+					
+					
+					
+				when others => 
+					state <= fetch;
+				
+			end case;
+		end if;
+	end process; 
+
