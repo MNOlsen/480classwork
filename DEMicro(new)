@@ -116,22 +116,22 @@ clocks: entity work.clk_div(behavior)
 						when "01110" => state <= execute_IN;
 						when "01111" => state <= execute_OUT;
 						--START OF USER DEFINED
-			--			when "10000" => state <= execute_add;
-			--			when "10001" => state <= execute_STR;
-			--			when "10010" => state <= execute_LDR;
-			--			when "10011" => state <= execute_JMP;
-			--			when "10100" => state <= execute_JN;
-			--			when "10101" => state <= execute_SUB;
-			--			when "10110" => state <= execute_INC;
-			--			when "10111" => state <= execute_OR;
-			--			when "11000" => state <= execute_AND;
-			--			when "11001" => state <= execute_NOT;
-			--			when "11010" => state <= execute_JP;
-			--			when "11011" => state <= execute_JZ;
-			--			when "11100" => state <= execute_SHL;
-			--			when "11101" => state <= execute_SHR;
-			--			when "11110" => state <= execute_IN;
-			--			when "11111" => state <= execute_OUT;	
+						when "10000" => state <= execute_XOR;
+						when "10001" => state <= execute_READ;
+						when "10010" => state <= execute_WRITE;
+						when "10011" => state <= execute_DEC;
+						when "10100" => state <= execute_NAND;
+						when "10101" => state <= execute_NOR;
+						when "10110" => state <= execute_SRA;
+						when "10111" => state <= execute_SLA;
+						when "11000" => state <= execute_SW;
+						when "11001" => state <= execute_LW;
+						when "11010" => state <= execute_SLT;
+						when "11011" => state <= execute_SB;
+						when "11100" => state <= execute_LB;
+						when "11101" => state <= execute_NOP;
+						when "11110" => state <= execute_BRK;
+						when "11111" => state <= execute_CLZ;	
 				
 						end case; 
 				when reset => 
@@ -215,12 +215,69 @@ clocks: entity work.clk_div(behavior)
 					leds(7 downto 0) <= reg_ac(7 downto 0); 
 					state <= fetch; 
 					
+				when execute_XOR =>
+					reg_ac <= reg_ac XOR signed(memory_data_reg);
+					state <= fetch;
+				
+				when execute_READ =>
+				
+				when execute_wRITE =>
+				
+				when execute_DEC =>
+					reg_ac <= reg_ac - 1;
+					state <= fetch;
 					
+				when execute_NAND => 
+					reg_ac <= reg_ac NAND signed(memory_data_reg);
+					state <= fetch;
+				
+				when execute_nor =>
+					reg_ac <= reg_ac NOR signed(memory_data_reg);
+					state <= fetch;
+				
+				when execute_srA => 
+					reg_ac <= reg_ac sra 1;
+					state <= fetch;
+				
+				when execute_sla =>
+					reg_ac <= reg_ac sla 1;
+					state <= fetch;
+				
+				when execute_sw =>
 					
+					state <= fetch;
+				
+				when execute_LW =>
+				
+					state <= fetch;
+				
+				when execute_SLT =>
+					
+					state <= fetch;
+				
+				when execute_sb =>
+					 
+					 state <= fetch;
+				
+				when execute_lb =>
+				
+					state <= fetch;
+				
+				when execute_NOP =>
+					state <= fetch;
+				
+				when execute_brk =>
+					
+					state <= fetch;
+				
+				when execute_clz =>
+					
+					state <= fetch;
+			
+		
 				when others => 
 					state <= fetch;
 				
 			end case;
 		end if;
 	end process; 
-
