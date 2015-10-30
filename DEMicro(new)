@@ -6,10 +6,8 @@ entity DEMicro is
 	generic (address_width	: integer := 10;
 				data_width		: integer := 16);
 				
-	port (opcode						: in std_logic_vector(4 downto 0);
-			clock, reset				: in std_logic;
+	port(	clock, reset				: in std_logic;
 			clk_sel, button_clock	: in std_logic;
-			reg_sel						: in std_logic;
 			switches						: in std_logic_vector(7 downto 0); 
 			LEDS							: out std_logic_vector(7 downto 0);
 			PC_out						: out std_logic_vector(address_width-1 downto 0);
@@ -26,13 +24,19 @@ attribute ram_init_file	: string;
 attribute ram_init_file of ram_block : signal is "program.mif";
 
 type FSM is (reset, fetch, decode, 
-				 execute_add, execute_store, execute_load, execute_jump, 
-				 execute_jn, execute_sub, execute_inc, execute_or,
-				 execute_and, execute_not, execute_jp, execute_jz,
-				 execute_shl, execute_shr, execute_in, execute_out);
+				 execute_add, execute_store, execute_store2, execute_load, execute_JMP, 
+				 execute_jn, execute_jn2, execute_sub, execute_inc, execute_or,
+				 execute_and, execute_not, execute_jp, execute_jp2, execute_jz,
+				 execute_jz2, execute_shl, execute_shr, execute_in, execute_out,
+				 execute_XOR, execute_READ, execute_WRITE, execute_DEC,
+				 execute_NAND, execute_NOR, execute_sra, execute_sla,
+				 execute_sw, execute_sw2, execute_lw, execute_slt, execute_sb,
+				 execute_sb2, execute_lb, execute_NOP, execute_brk, execute_clz);
 
 signal state					: FSM;
 signal instruction_reg		: unsigned(data_width-1 downto 0);
+signal opcode					: unsigned(4 downto 0);
+signal reg_sel					: std_logic;
 signal memory_data_reg		: unsigned(data_width-1 downto 0);
 signal reg_ac					: signed(data_width-1 downto 0);
 signal PC						: unsigned(address_width-1 downto 0);
@@ -53,6 +57,8 @@ reg_ac_out						<= std_logic_vector(reg_ac);
 memory_data_reg_out 			<= std_logic_vector(memory_data_reg);
 memory_address_reg_out		<= std_logic_vector(memory_address_reg);
 memory_write_out 				<= memory_write;
+opcode							<= instruction_reg(15 downto 11);
+reg_sel							<= std_logic(instruction_reg(10));
 
 clocks: entity work.clk_div(behavior)
 	port map (clock_50mhz => clock, clock_125hz => clk_125mhz);
@@ -64,6 +70,7 @@ clocks: entity work.clk_div(behavior)
 		else
 			my_clock <= button_clock;
 		end if;
+		
 		if rising_edge(my_clock) then 
 			if memory_write = '1' then 
 				ram_block(to_integer(memory_address_reg)) <= unsigned(reg_ac);
@@ -90,13 +97,7 @@ clocks: entity work.clk_div(behavior)
 		
 		--start of code
 		if rising_edge(my_clock) then 
-			
-			
-				
-			end case; 
-			
-			case state is 
-				
+			case state is
 				when decode => 
 					case opcode is 
 						when "00000" => state <= execute_ADD;
@@ -150,8 +151,9 @@ clocks: entity work.clk_div(behavior)
 					state <= fetch ; -- this should theoretically send it to the next state.
 					
 				when execute_ST0RE	=> 
-					memory_write <= '1';
-					memory_address_reg <= reg_ac; --may need to edit
+					state <= execute_STORE2;
+				
+				when execute_STORE2 =>
 					state <= fetch; 
 				
 				when execute_LDR => 
@@ -159,14 +161,17 @@ clocks: entity work.clk_div(behavior)
 					state <= fetch;
 				
 				when execute_JMP => -- does this need 2 clock cycles?
-					PC = instruction_reg(address_width -1 downto 0);
+					PC <= instruction_reg(address_width -1 downto 0);
 					state <= fetch;
 				
 				when execute_JN => 
 					if (reg_ac < 0 ) then 
 						PC <= instruction_reg(address_width - 1 downto 0); 
 					end if;
-					state <= fetch; 
+					state <= execute_JN2; 
+				
+				when execute_JN2 =>
+					state <= fetch;
 					
 				when execute_SUB =>
 					reg_ac <= reg_ac = signed(memory_data_reg); 
@@ -186,18 +191,25 @@ clocks: entity work.clk_div(behavior)
 				
 				when execute_NOT => 
 					reg_ac <= NOT reg_ac;
+					state <= fetch;
 				
 				when execute_JP =>
 					if (reg_ac > 0 ) then 
 						PC <= instruction_reg(address_width - 1 downto 0); 
 					end if;
-					state <= fetch; 
+					state <= execute_JP2;
+				
+				when execute_JP2 =>
+					state <= fetch;
 				
 				when execute_JZ => 
 					if (reg_ac = 0 ) then 
 						PC <= instruction_reg(address_width - 1 downto 0); 
 					end if;
-					state <= fetch; 
+					state <= execute_JZ2;
+				
+				when execute_JZ2 =>
+					state <= fetch;
 				
 				when execute_SHL =>
 					reg_ac <= reg_ac sll 1;
@@ -244,11 +256,13 @@ clocks: entity work.clk_div(behavior)
 					state <= fetch;
 				
 				when execute_sw =>
+					state <= execute_sw2;
 					
+				when execute_sw2 =>
 					state <= fetch;
-				
+					
 				when execute_LW =>
-				
+					reg_ac(3 downto 0) <= signed(memory_data_reg(3 downto 0));
 					state <= fetch;
 				
 				when execute_SLT =>
@@ -256,28 +270,84 @@ clocks: entity work.clk_div(behavior)
 					state <= fetch;
 				
 				when execute_sb =>
-					 
-					 state <= fetch;
+					state <= execute_sb2;
+				
+				when execute_sb2 =>
+					state <= fetch;
 				
 				when execute_lb =>
-				
+					reg_ac(0) <= signed(memory_data_reg(0));
 					state <= fetch;
 				
 				when execute_NOP =>
 					state <= fetch;
 				
 				when execute_brk =>
-					
+			
 					state <= fetch;
 				
 				when execute_clz =>
 					
 					state <= fetch;
-			
 		
 				when others => 
 					state <= fetch;
 				
 			end case;
 		end if;
-	end process; 
+	end process;
+	
+	with state select
+		memory_address_reg <=
+			(others => '0') when reset,
+			PC when fetch,
+			instruction_reg(address_width-1 downto 0) when decode,
+			PC when execute_ADD,
+			instruction_reg(address_width-1 downto 0) when execute_ST0RE,
+			PC when execute_STORE2,
+			PC when execute_LDR,
+			instruction_reg(address_width-1 downto 0) when execute_JMP,
+			PC when execute_JN,
+			PC when execute_JN2,
+			PC when execute_SUB,
+			PC when execute_INC, --not sure on this one
+			PC when execute_OR,
+			PC when execute_AND,
+			PC when execute_NOT,
+			PC when execute_JP,
+			PC when execute_JP2
+			PC when execute_JZ,
+			PC when execute_JZ2,
+			PC when execute_SHL, --not sure on this one
+			PC when execute_SHR, --not sure on this one
+			PC when execute_IN, --not sure on this one
+			PC when execute_OUT, --not sure on this one
+			PC when execute_XOR,
+			when execute_READ, --don't know where to start
+			when execute_WRITE, --don't know where to start
+			PC when execute_DEC, --not sure on this one
+			PC when execute_NOR,
+			PC when execute_NAND,
+			PC when execute_SRA, --not sure on this one
+			PC when execute_SLA, --not sure on this one
+			PC when execute_SLT,	--not sure on this one
+			instruction_reg(address_width-1 downto 0) when execute_SB,
+			PC when execute_NOP, --not sure on this one
+			PC when execute_BRK, --not sure on this one
+			PC when execute_CLZ; --not sure on this one
+		memory_address_reg(3 downto 0) <=
+			instruction_reg(3 downto 0) when execute_SW,
+			PC(3 downto 0) when execute_SW2,
+			PC(3 downto 0) when execute_LW;
+		memory_address_reg(0) <=
+			instruction_reg(0) when execute_SB,
+			PC(0) when execute_SB2,
+			PC(0) when execute_LB;
+	
+	with state select
+		memory_write <= '1' when execute_STORE,
+							 '1' when execute_sw,
+							 '1' when execute_sb;
+							 '0' when others;
+			
+end rtl;
