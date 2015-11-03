@@ -1,0 +1,56 @@
+
+		CLR R0  -- i = 0
+loopi:	LDR t0, Address -- t0 <- contents of address
+		SLT R0, 4 -- NUMBER OF INSTRUCTIONS
+
+		JZ 	R0, loopj 
+
+		
+
+		
+		
+		
+		
+		
+		
+		CLR R1  -- j = 0 --- initalize i
+loopj:	LDR T0, Address   -- t0 <- contents of address
+		SLT R1, 4 -- NUMBER OF INSTRUCTIONS -- R1=1 if less than 4
+		LDR T1, Address   -- T0 <- contents of address
+		JZ  R1,done -- If R1 >=4, jump to done if gone through all the addresses
+		
+		-- body of code
+		Add T1, 3FF -- where 1 is. address + 1
+		STR T1, Address -- address = address + 1
+		
+		SLT T0, Address -- If addr < addr +1 t0 = 1 
+							addr > addr + 1 t0 = 0
+		JZ T0, flip
+		
+	
+		
+		
+		INC R1  -- at end of everything increment j, then
+		JMP, loopj	-- jump back to top of loopj
+		
+		
+		
+		
+		
+		We will need to store the contents of the address in a temp register
+		then compare that register with the contents of the next address	
+			(address + 1)
+		if greater than (slt = 0) then switch the contents of the addresses 
+		
+		beq sets a zero flag to 1 when equal
+		
+		
+done: 
+
+
+
+
+
+
+
+
